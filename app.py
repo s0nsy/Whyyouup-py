@@ -1,37 +1,34 @@
-from flask import Flask,request, jsonify
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import LogisticRegression
-import pandas as pd
-import pickle
+from flask import Flask, request, jsonify
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
 app = Flask(__name__)
 
-@app.route('/train', methods=['POST'])
-def train():
-    global model, encoder
-    file = request.files['file']
-    df = pd.read_csv(file)
+model_path = "./finetuned_model"
+sentiment_analyzer = None
 
-    X = df[['code']]
-    y = df['sentiment']
-
-    encoder = OneHotEncoder(handle_unknown='ignore')
-    X_encoded = encoder.fit_transform(X)
-
-    with open('model.pkl','wb') as f:
-        pickle.dump((model,encoder),f)
-
-    return jsonify({"status": "success", "trained_samples": len(df)})
-
+def load_model():
+    global sentiment_analyzer
+    sentiment_analyzer = pipeline("text-classification", model=model_path, tokenizer=model_path)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    global model, encoder
     data = request.get_json()
-    code = [[data['code']]]
-    X_encoded = encoder.transform(code)
-    prediction = model.predict(X_encoded)[0]
-    return jsonify({"prediction": int(prediction)})
+    text = data.get('text')
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    result = sentiment_analyzer(text, truncation=True, max_length=256)[0]
+
+    return jsonify({
+        "label": result['label'],  # e.g., "LABEL_0", "LABEL_1", "LABEL_2"
+        "score": float(result['score'])
+    })
+
+@app.route('/reload', methods=['POST'])
+def reload_model():
+    load_model()
+    return jsonify({"status": "reloaded"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port = 5000)

@@ -3,9 +3,6 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (whyyouup-py)" />
   </component>
-  <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="2effd6f0-f92d-4b80-8ee3-e54eeeb26e35" />
-  </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (whyyouup-py)" project-jdk-type="Python SDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
